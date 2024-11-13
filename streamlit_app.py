@@ -1,5 +1,5 @@
 import streamlit as st
-from flowise import Flowise, PredictionData
+from flowise import Flowise
 import json
 
 # Flowise app base url
