@@ -6,7 +6,7 @@ import json
 base_url = st.secrets["https://qa-admin.precisionai-portal.bayer.com:8510/chatbot/05d59e9b-376a-41be-bff7-764baf8737a8"] or "https://qa-admin.precisionai-portal.bayer.com:8510/chatbot/05d59e9b-376a-41be-bff7-764baf8737a8"
 
 # Chatflow/Agentflow ID
-flow_id = st.secrets["abc"] or "abc"
+flow_id = st.secrets["05d59e9b-376a-41be-bff7-764baf8737a8"] or "abc"
 
 # Show title and description.
 st.title("💬 Flowise Streamlit Chat")
