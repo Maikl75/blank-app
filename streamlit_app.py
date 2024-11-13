@@ -31,9 +31,3 @@ st.title("🎈 Maiky new app")
 st.write(
     "Let's start building! For help and inspiration, head over to [docs.streamlit.io](https://docs.streamlit.io/)."    
 )
-import { ocr } from 'llama-ocr';
-
-const markdown = await ocr({
-  filePath: "https://github.com/user-attachments/assets/8138276f-a896-4c60-a8ca-4522054f06d4",
-  apiKey: process.env.TOGETHER_API_KEY
-});
