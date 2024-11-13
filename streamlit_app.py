@@ -1,33 +1,63 @@
 import streamlit as st
+from flowise import Flowise, PredictionData
+import json
 
-with st.sidebar:
-    openai_api_key = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
-    "[Get an OpenAI API key](https://platform.openai.com/account/api-keys)"
-    "[View the source code](https://github.com/streamlit/llm-examples/blob/main/Chatbot.py)"
-    "[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/streamlit/llm-examples?quickstart=1)"
+# Flowise app base url
+base_url = st.secrets["APP_URL"] or "https://qa-admin.precisionai-portal.bayer.com:8510/chatbot/05d59e9b-376a-41be-bff7-764baf8737a8"
 
-st.title("💬 Chatbot")
-st.caption("🚀 A Streamlit chatbot powered by OpenAI")
-if "messages" not in st.session_state:
-    st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
+# Chatflow/Agentflow ID
+flow_id = st.secrets["FLOW_ID"] or "abc"
 
-for msg in st.session_state.messages:
-    st.chat_message(msg["role"]).write(msg["content"])
-
-if prompt := st.chat_input():
-    if not openai_api_key:
-        st.info("Please add your OpenAI API key to continue.")
-        st.stop()
-
-    client = OpenAI(api_key=openai_api_key)
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    st.chat_message("user").write(prompt)
-    response = client.chat.completions.create(model="gpt-3.5-turbo", messages=st.session_state.messages)
-    msg = response.choices[0].message.content
-    st.session_state.messages.append({"role": "assistant", "content": msg})
-    st.chat_message("assistant").write(msg)
-
-st.title("🎈 Maiky new app")
+# Show title and description.
+st.title("💬 Flowise Streamlit Chat")
 st.write(
-    "Let's start building! For help and inspiration, head over to [docs.streamlit.io](https://docs.streamlit.io/)."    
+    "This is a simple chatbot that uses Flowise Python SDK"
 )
+
+# Create a Flowise client.
+client = Flowise(base_url=base_url)
+
+# Create a session state variable to store the chat messages. This ensures that the
+# messages persist across reruns.
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# Display the existing chat messages via `st.chat_message`.
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+def generate_response(prompt: str):
+    print('generating response')
+    completion = client.create_prediction(
+        PredictionData(
+            chatflowId=flow_id,
+            question=prompt,
+            overrideConfig={
+                "sessionId": "session1234"
+            },
+            streaming=True
+        )
+    )
+
+    for chunk in completion:
+        print(chunk)
+        parsed_chunk = json.loads(chunk)
+        if (parsed_chunk['event'] == 'token' and parsed_chunk['data'] != ''):
+            yield str(parsed_chunk['data'])
+
+# Create a chat input field to allow the user to enter a message. This will display
+# automatically at the bottom of the page.
+if prompt := st.chat_input("What is up?"):
+
+    # Store and display the current prompt.
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    # Stream the response to the chat using `st.write_stream`, then store it in 
+    # session state.
+    with st.chat_message("assistant"):
+        response = generate_response(prompt)
+        full_response = st.write_stream(response)
+    st.session_state.messages.append({"role": "assistant", "content": full_response})
